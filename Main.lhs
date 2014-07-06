@@ -117,7 +117,7 @@ It is passed the function itself, and the points in its domain to
 consider.
 
 \begin{code}
-
+{-# INLINE findPeak #-}
 findPeak::(Int->Double)-> Int -> Int ->(Int,Double)
 -- findPeak _ [] = error "Empty argument to findPeak"
 findPeak keyfn x hi = go (keyfn x) x
@@ -126,8 +126,8 @@ findPeak keyfn x hi = go (keyfn x) x
       if yp > hi
       then (yp,v)
       else
-        let new_y = yp + 1
-            ky = keyfn new_y in
+        let !new_y = yp + 1
+            !ky = keyfn new_y in
         case ky<=v of
           True -> (yp,v)
           False ->  go ky new_y
