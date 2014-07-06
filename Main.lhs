@@ -141,9 +141,7 @@ the domain to search in the parameter \texttt{start}.
 \begin{code}
 policy::Int->Int->Int->Array U DIM2 Double->(Int,Double)
 policy cap prod start evf =
-  findPeak fn start (nGridCapital - 1) -- [start..(nGridCapital-1)]
-  where
-    fn nxt = compute_vf evf cap prod nxt
+  findPeak (compute_vf evf cap prod) start (nGridCapital - 1)
 \end{code}
 
 Find the best policies for each level of capital for a
@@ -160,7 +158,7 @@ writePolicy::forall s. Array U DIM2 Double
 writePolicy !evf !mv !prod = update 0 0
   where
     ix i = i*nGridProductivity+prod
-    update cap start = do
+    update !cap !start = do
       let (n,v) = policy cap prod start evf
       let k = vGridCapital `unsafeIndex` (ix1 n)
       M.unsafeWrite mv (ix cap) (k,v)
@@ -171,8 +169,8 @@ writePolicy !evf !mv !prod = update 0 0
 
 \section{Value function iteration}
 \begin{code}
-data DPState = DPState {vf::Array U DIM2 Double,
-                        pf::Array U DIM2 Double}
+data DPState = DPState {vf:: Array U DIM2 Double,
+                        pf:: Array U DIM2 Double}
 
 iterDP::DPState->DPState
 iterDP s = DPState {vf = nvf,pf =npf}
