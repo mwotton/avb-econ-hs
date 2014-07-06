@@ -105,11 +105,11 @@ of the expected value function \texttt{evf} that is passed to us.
 compute_vf::Array U DIM2 Double->Int->Int->Int->Double
 compute_vf evf cap prod nxt = v
   where
-    y = mOutput `unsafeIndex` (ix2 cap prod)
-    k' = vGridCapital `unsafeIndex` (ix1 nxt)
-    c = y - k'
-    ev = evf `unsafeIndex` (ix2 nxt prod)
-    v = (1-bbeta)*(log c)+bbeta*ev
+    !y = mOutput `unsafeIndex` (ix2 cap prod)
+    !k' = vGridCapital `unsafeIndex` (ix1 nxt)
+    !c = y - k'
+    !ev = evf `unsafeIndex` (ix2 nxt prod)
+    !v = (1-bbeta)*(log c)+bbeta*ev
 \end{code}
 
 A helper function to compute the peak of a single-peaked function.
@@ -139,6 +139,7 @@ and productivity. We are passed a lower bound for
 the domain to search in the parameter \texttt{start}.
 
 \begin{code}
+{-# INLINE policy #-}
 policy::Int->Int->Int->Array U DIM2 Double->(Int,Double)
 policy cap prod start evf =
   findPeak (compute_vf evf cap prod) start (nGridCapital - 1)
@@ -151,6 +152,7 @@ for each level of capital at the point where the search
 for the previous level of capital succeeded.
 
 \begin{code}
+{-# INLINE writePolicy #-}
 writePolicy::forall s. Array U DIM2 Double
              -> M.MVector s (Double,Double)
              -> Int
@@ -175,15 +177,16 @@ data DPState = DPState {vf:: Array U DIM2 Double,
 iterDP::DPState->DPState
 iterDP s = DPState {vf = nvf,pf =npf}
   where
-    evf = mmultS (vf s) (transpose2S mTransition)
-    bestpv = V.create $ do
+    !evf = mmultS (vf s) (transpose2S mTransition)
+    !bestpv = V.create $ do
       v <- M.new (nGridCapital*nGridProductivity)
       mapM_ (writePolicy evf v) [0..(nGridProductivity-1)]
       return v
-    (npf',nvf')= V.unzip bestpv
-    npf = fromUnboxed (Z:.nGridCapital:.nGridProductivity) npf'
-    nvf = fromUnboxed (Z:.nGridCapital:.nGridProductivity) nvf'
+    (!npf',!nvf')= V.unzip bestpv
+    !npf = fromUnboxed (Z:.nGridCapital:.nGridProductivity) npf'
+    !nvf = fromUnboxed (Z:.nGridCapital:.nGridProductivity) nvf'
 
+{-# INLINE supdiff #-}
 supdiff::Array U DIM2 Double->Array U DIM2 Double->Double
 supdiff v1 v2 = foldAllS max ninfnty $ R.map abs (v1 -^ v2)
 
